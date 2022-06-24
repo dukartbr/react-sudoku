@@ -100,6 +100,7 @@ function ChildCell({
       <Flex>
         <Center h='100px' w='100px'>
           {cell.correctValue}
+          {/* <pre>{JSON.stringify(cell, null, 2)}</pre> */}
         </Center>
       </Flex>
     </GridItem>
