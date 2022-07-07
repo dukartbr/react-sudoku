@@ -24,27 +24,58 @@ export function generateInitialGame(): SudokuGame {
 function generateCellContainers(): CellContainer[] {
   const generatedCellContainers: CellContainer[] = [];
 
+  function renderedCellContainer({
+    containerIndex,
+    containerXIndex,
+    containerYIndex,
+  }: {
+    containerIndex: number;
+    containerXIndex: number;
+    containerYIndex: number;
+  }): Cell[] {
+    const cells = generateSingleCellContainer({
+      containerIndex,
+      containerXIndex,
+      containerYIndex,
+    });
+    if (cells.filter((c) => c.correctValue === undefined).length !== 0) {
+      // return renderedCellContainer({
+      //   containerIndex,
+      //   containerXIndex,
+      //   containerYIndex,
+      // });
+      return [];
+    }
+
+    return cells;
+  }
+
   // to create 9 containers we loop 8 times and generate 1 container each tie
   for (let i = 0; i <= 8; i++) {
     // generate an X axis based looping index
-    const containerXAxis = [0, 3, 6].includes(i)
+    const containerXIndex = [0, 3, 6].includes(i)
       ? 0
       : [1, 4, 7].includes(i)
       ? 1
       : 2;
 
     // generate an Y axis based looping index
-    const containerYAxis = i >= 6 ? 2 : i >= 3 ? 1 : 0;
+    // const containerYIndex = i >= 6 ? 2 : i >= 3 ? 1 : 0;
+    const containerYIndex = [0, 1, 2].includes(i)
+      ? 0
+      : [3, 4, 5].includes(i)
+      ? 1
+      : 2;
 
     const cellContainer: CellContainer = {
-      x: containerXAxis,
-      y: containerYAxis,
+      x: containerXIndex,
+      y: containerYIndex,
       containerIndex: i,
       // generate 9 cells for the container
-      cells: generateSingleCellContainer({
+      cells: renderedCellContainer({
         containerIndex: i,
-        containerXAxis,
-        containerYAxis,
+        containerXIndex,
+        containerYIndex,
       }),
     };
 
@@ -59,12 +90,12 @@ function generateCellContainers(): CellContainer[] {
 
 function generateSingleCellContainer({
   containerIndex,
-  containerXAxis,
-  containerYAxis,
+  containerXIndex,
+  containerYIndex,
 }: {
   containerIndex: number;
-  containerXAxis: number;
-  containerYAxis: number;
+  containerXIndex: number;
+  containerYIndex: number;
 }): Cell[] {
   const cells = [];
 
@@ -72,25 +103,38 @@ function generateSingleCellContainer({
 
   for (let i = 0; i <= 8; i++) {
     // Same method of generating axis locations as before
-    const cellXAxis = [0, 3, 6].includes(i) ? 0 : [1, 4, 7].includes(i) ? 1 : 2;
-    const cellYAxis = i >= 6 ? 2 : i >= 3 ? 1 : 0;
+    const cellXIndex = [0, 3, 6].includes(i)
+      ? 0
+      : [1, 4, 7].includes(i)
+      ? 1
+      : 2;
+
+    // generate an Y axis based looping index
+    // const containerYIndex = i >= 6 ? 2 : i >= 3 ? 1 : 0;
+    const cellYIndex = [0, 1, 2].includes(i)
+      ? 0
+      : [3, 4, 5].includes(i)
+      ? 1
+      : 2;
 
     // generate the cells value by using the location of the currently rendering cell and its respective container
     // check against all cells with a value in the same x or y spot
     const generatedValue: number = generateCellValue({
       possibleCellValues,
-      cellXAxis,
-      cellYAxis,
-      containerXAxis,
-      containerYAxis,
+      cellXIndex,
+      cellYIndex,
+      containerXIndex,
+      containerYIndex,
     });
+
+    // TODO: RERUN WHEN RANDOM NUMBER FAILS TO FILL ALL CELL VALUES
 
     possibleCellValues = possibleCellValues.filter((v) => v !== generatedValue);
 
     const generatedCell = {
       location: {
         x: i,
-        y: cellYAxis,
+        y: cellYIndex,
         containerIndex,
       },
       correctValue: generatedValue,
@@ -105,36 +149,44 @@ function generateSingleCellContainer({
 
 function generateCellValue({
   possibleCellValues,
-  cellXAxis,
-  cellYAxis,
-  containerXAxis,
-  containerYAxis,
+  cellXIndex,
+  cellYIndex,
+  containerXIndex,
+  containerYIndex,
 }: {
   possibleCellValues: number[];
-  cellXAxis: number;
-  cellYAxis: number;
-  containerXAxis: number;
-  containerYAxis: number;
+  cellXIndex: number;
+  cellYIndex: number;
+  containerXIndex: number;
+  containerYIndex: number;
 }): number {
   // get matching vertical and horizontal containers of the current cell's container
   const matchingVertContainers: CellContainer[] = cellContainers.filter(
-    (container) => container.y === containerYAxis
+    (container) => container.x === containerXIndex
   );
   const matchingHorizContainers: CellContainer[] = cellContainers.filter(
-    (container) => container.x === containerXAxis
+    (container) => container.y === containerYIndex
   );
 
   // get the cell values of the cells in the matching containers that have the same x & y cooridants
   const matchingVertCellValues: number[] = matchingVertContainers
     .map((container) =>
-      container.cells.filter((cell) => cell.location.y === cellYAxis)
+      container.cells.filter((cell) => {
+        if ([0, 3, 6].includes(cellXIndex)) {
+          return [0, 3, 6].includes(cell.location.x);
+        }
+        if ([1, 4, 7].includes(cellXIndex)) {
+          return [1, 4, 7].includes(cell.location.x);
+        }
+        return [2, 5, 8].includes(cell.location.x);
+      })
     )
     .flat()
     .map((cell) => cell.correctValue);
 
   const matchingHorizCellValues: number[] = matchingHorizContainers
     .map((container) =>
-      container.cells.filter((cell) => cell.location.x === cellXAxis)
+      container.cells.filter((cell) => cell.location.y === cellYIndex)
     )
     .flat()
     .map((cell) => cell.correctValue);
@@ -144,20 +196,27 @@ function generateCellValue({
     ...matchingVertCellValues,
   ];
 
-  console.log("containers", { matchingHorizCellValues });
-
-  console.log("invalidCellOptions", invalidCellOptions);
-  console.log("possibleCellValues", possibleCellValues);
-
   const cellOptions = possibleCellValues.filter(
     (val) => invalidCellOptions.indexOf(val) === -1
   );
 
-  console.log("cellOption", cellOptions);
-
   const cellValue = cellOptions[Math.floor(Math.random() * cellOptions.length)];
 
-  console.log("renderedCellValue", cellValue);
+  console.log(`cellInfo for cell ${cellValue}`, {
+    possibleCellValues,
+    cellXIndex,
+    cellYIndex,
+    containerXIndex,
+    containerYIndex,
+    cellContainers,
+    cellValue,
+    cellOptions,
+    invalidCellOptions,
+    matchingHorizCellValues,
+    matchingVertCellValues,
+    matchingHorizContainers,
+    matchingVertContainers,
+  });
 
   return cellValue;
 }
