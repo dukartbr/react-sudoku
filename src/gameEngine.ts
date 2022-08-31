@@ -1,5 +1,6 @@
 // Will contain 9 cell containers, each with 9 cells containing a value. Keeps the global context of the game during initial generation
 const cellContainers: CellContainer[] = [];
+let renderCount = 0;
 
 export function generateCellBackgroundColor({
   cellIndex,
@@ -20,35 +21,40 @@ export function generateInitialGame(): SudokuGame {
   return initialGame;
 }
 
-// generate 9 containers
-function generateCellContainers(): CellContainer[] {
-  const generatedCellContainers: CellContainer[] = [];
-
-  function renderedCellContainer({
+function renderedCellContainer({
+  containerIndex,
+  containerXIndex,
+  containerYIndex,
+}: {
+  containerIndex: number;
+  containerXIndex: number;
+  containerYIndex: number;
+}): Cell[] {
+  const cells = generateSingleCellContainer({
     containerIndex,
     containerXIndex,
     containerYIndex,
-  }: {
-    containerIndex: number;
-    containerXIndex: number;
-    containerYIndex: number;
-  }): Cell[] {
-    const cells = generateSingleCellContainer({
-      containerIndex,
-      containerXIndex,
-      containerYIndex,
-    });
-    if (cells.filter((c) => c.correctValue === undefined).length !== 0) {
-      // return renderedCellContainer({
-      //   containerIndex,
-      //   containerXIndex,
-      //   containerYIndex,
-      // });
-      return [];
-    }
+  });
+  // const invalidValues = cells.filter((c) => c.correctValue === undefined);
 
-    return cells;
-  }
+  // console.log("invalidValues", invalidValues);
+
+  // if (invalidValues.length > 0 && renderCount < 100) {
+
+  //   return renderedCellContainer({
+  //     containerIndex,
+  //     containerXIndex,
+  //     containerYIndex,
+  //   });
+  //   // return [];
+  // }
+
+  return cells;
+}
+
+// generate 9 containers
+function generateCellContainers(): CellContainer[] {
+  const generatedCellContainers: CellContainer[] = [];
 
   // to create 9 containers we loop 8 times and generate 1 container each tie
   for (let i = 0; i <= 8; i++) {
@@ -84,6 +90,18 @@ function generateCellContainers(): CellContainer[] {
     // push to the global variable
     cellContainers.push(cellContainer);
   }
+
+  // console.log("generatedCellContainers", generatedCellContainers);
+  // // check for undefined values and rerun to ensure that doesn't happen
+  // const errorCells = generatedCellContainers
+  //   .map((container) =>
+  //     container.cells.filter((cell) => cell.correctValue === undefined)
+  //   )
+  //   .flat();
+  // if (errorCells.length > 0 && renderCount < 100) {
+  //   renderCount++;
+  //   return generateCellContainers();
+  // }
 
   return generatedCellContainers;
 }
@@ -126,8 +144,6 @@ function generateSingleCellContainer({
       containerXIndex,
       containerYIndex,
     });
-
-    // TODO: RERUN WHEN RANDOM NUMBER FAILS TO FILL ALL CELL VALUES
 
     possibleCellValues = possibleCellValues.filter((v) => v !== generatedValue);
 
@@ -202,21 +218,21 @@ function generateCellValue({
 
   const cellValue = cellOptions[Math.floor(Math.random() * cellOptions.length)];
 
-  console.log(`cellInfo for cell ${cellValue}`, {
-    possibleCellValues,
-    cellXIndex,
-    cellYIndex,
-    containerXIndex,
-    containerYIndex,
-    cellContainers,
-    cellValue,
-    cellOptions,
-    invalidCellOptions,
-    matchingHorizCellValues,
-    matchingVertCellValues,
-    matchingHorizContainers,
-    matchingVertContainers,
-  });
+  // console.log(`cellInfo for cell ${cellValue}`, {
+  //   possibleCellValues,
+  //   cellXIndex,
+  //   cellYIndex,
+  //   containerXIndex,
+  //   containerYIndex,
+  //   cellContainers,
+  //   cellValue,
+  //   cellOptions,
+  //   invalidCellOptions,
+  //   matchingHorizCellValues,
+  //   matchingVertCellValues,
+  //   matchingHorizContainers,
+  //   matchingVertContainers,
+  // });
 
   return cellValue;
 }
